@@ -40,7 +40,7 @@ export const useResponsive = () => {
         setBreakpoint("laptop");
         setIsMobile(false);
         setIsTablet(false);
-        setIsDesktop(false);
+        setIsDesktop(true); // Laptop counts as desktop for cursor effects
       } else {
         setBreakpoint("desktop");
         setIsMobile(false);

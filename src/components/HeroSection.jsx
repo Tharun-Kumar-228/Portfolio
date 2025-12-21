@@ -67,6 +67,14 @@ const HeroSection = () => {
           });
         }
 
+        // Auto shift upward after animations complete (cinematic reveal)
+        tl.to(heroRef.current, {
+          y: -50,
+          duration: 1.5,
+          delay: 0.5,
+          ease: "power2.inOut"
+        }, "+=0.3");
+
         return () => {
           window.removeEventListener("scroll", handleScroll);
         };
@@ -78,7 +86,12 @@ const HeroSection = () => {
           duration: 1
         }).call(() => {
           gsap.set(contentRef.current.children, { opacity: 1, y: 0, clearProps: "all" });
-        });
+        }).to(heroRef.current, {
+          y: -50,
+          duration: 1.5,
+          delay: 0.5,
+          ease: "power2.inOut"
+        }, "+=0.3");
       }
     });
 
@@ -104,6 +117,13 @@ const HeroSection = () => {
           gsap.set(imageRef.current, { opacity: 1, scale: 1 });
         });
       }
+      // Subtle upward shift for tablet
+      tl.to(heroRef.current, {
+        y: -30,
+        duration: 1.2,
+        delay: 0.3,
+        ease: "power2.inOut"
+      }, "+=0.2");
     });
 
     // Mobile: Simple fade + slide
