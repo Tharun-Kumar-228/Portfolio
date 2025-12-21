@@ -12,6 +12,7 @@ const AboutSection = () => {
 
   const about = aboutData[0];
   const animationDuration = prefersReducedMotion ? 0.3 : isMobile ? 0.4 : 0.6;
+  const hasImage = about.image && about.image !== "/assets/profile.jpg";
 
   return (
     <section id="about" className="section about-section">
@@ -32,6 +33,22 @@ const AboutSection = () => {
           About Me
         </motion.h2>
         <div className="about-content">
+          {hasImage && (
+            <motion.div
+              className="about-image-wrapper"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: animationDuration, delay: 0.25 }}
+            >
+              <img
+                src={about.image}
+                alt={about.name}
+                className="about-image"
+                loading="lazy"
+              />
+            </motion.div>
+          )}
           <motion.div
             className="about-card"
             initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.9 }}
