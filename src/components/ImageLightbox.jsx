@@ -46,3 +46,4 @@ const ImageLightbox = ({ image, isOpen, onClose }) => {
 
 export default ImageLightbox;
 
+

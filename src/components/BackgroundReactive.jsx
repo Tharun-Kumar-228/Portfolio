@@ -4,121 +4,118 @@ import { useTheme } from "../hooks/useTheme";
 
 /**
  * Theme-reactive animated background
- * Subtle particles/motion that responds to cursor proximity
- * GPU-accelerated, lightweight
+ * Mesh network of particles that responds to cursor proximity
+ * GPU-accelerated canvas for performance
  */
 const BackgroundReactive = () => {
   const canvasRef = useRef(null);
   const { isMobile, prefersReducedMotion, isDesktop } = useResponsive();
   const { isDark } = useTheme();
-  const particlesRef = useRef([]);
-  const mouseRef = useRef({ x: 0, y: 0 });
+  const mouseRef = useRef({ x: -1000, y: -1000 });
   const animationFrameRef = useRef(null);
 
   useEffect(() => {
-    // Disable on mobile or reduced motion
-    if (isMobile || prefersReducedMotion || !isDesktop) {
-      return;
-    }
+    if (isMobile || prefersReducedMotion || !isDesktop) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    
+    let dpr = window.devicePixelRatio || 1;
+    let width, height;
+
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
       ctx.scale(dpr, dpr);
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
     };
 
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // Initialize particles
-    const particleCount = 30;
-    const particles = [];
+    // Particle Config
+    const particleCount = 40; // Balanced for performance/visuals
+    const connectionDist = 180;
+    const mouseDist = 250;
 
+    // Create particles
+    const particles = [];
     for (let i = 0; i < particleCount; i++) {
       particles.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        radius: Math.random() * 2 + 1,
+        x: Math.random() * width,
+        y: Math.random() * height,
         vx: (Math.random() - 0.5) * 0.5,
         vy: (Math.random() - 0.5) * 0.5,
-        opacity: Math.random() * 0.5 + 0.2
+        size: Math.random() * 2 + 0.5,
       });
     }
 
-    particlesRef.current = particles;
-
-    // Mouse tracking
-    const handleMouseMove = (e) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY };
+    const handlMouseMove = (e) => {
+      mouseRef.current.x = e.clientX;
+      mouseRef.current.y = e.clientY;
     };
 
-    document.addEventListener("mousemove", handleMouseMove, { passive: true });
+    window.addEventListener("mousemove", handlMouseMove);
 
-    // Animation loop
+    // Animation Loop
     const animate = () => {
-      ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+      ctx.clearRect(0, 0, width, height);
 
-      const mouse = mouseRef.current;
-      const accentColor = isDark ? "rgba(129, 140, 248, 0.3)" : "rgba(99, 102, 241, 0.2)";
-      const textColor = isDark ? "rgba(241, 245, 249, 0.1)" : "rgba(31, 41, 55, 0.1)";
+      const accentRGB = isDark ? "129, 140, 248" : "99, 102, 241"; // Indigo-like
+      const lineRGB = isDark ? "255, 255, 255" : "0, 0, 0";
 
-      particles.forEach((particle) => {
-        // Update position
-        particle.x += particle.vx;
-        particle.y += particle.vy;
+      particles.forEach((p, i) => {
+        // Move
+        p.x += p.vx;
+        p.y += p.vy;
 
-        // Bounce off edges
-        if (particle.x < 0 || particle.x > window.innerWidth) particle.vx *= -1;
-        if (particle.y < 0 || particle.y > window.innerHeight) particle.vy *= -1;
+        // Bounce
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
 
-        // Cursor proximity effect
-        const dx = mouse.x - particle.x;
-        const dy = mouse.y - particle.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const maxDistance = 150;
+        // Mouse interaction
+        const dx = mouseRef.current.x - p.x;
+        const dy = mouseRef.current.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < maxDistance) {
-          const force = (maxDistance - distance) / maxDistance;
-          particle.x += (dx / distance) * force * 0.5;
-          particle.y += (dy / distance) * force * 0.5;
+        if (dist < mouseDist) {
+          const force = (mouseDist - dist) / mouseDist;
+          const angle = Math.atan2(dy, dx);
+          // Gentle push away
+          p.x -= Math.cos(angle) * force * 0.5;
+          p.y -= Math.sin(angle) * force * 0.5;
         }
 
         // Draw particle
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        ctx.fillStyle = distance < maxDistance ? accentColor : textColor;
-        ctx.globalAlpha = particle.opacity;
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${accentRGB}, ${0.3})`;
         ctx.fill();
-      });
 
-      // Draw connections between nearby particles
-      particles.forEach((particle, i) => {
-        particles.slice(i + 1).forEach((otherParticle) => {
-          const dx = particle.x - otherParticle.x;
-          const dy = particle.y - otherParticle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+        // Connections
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx2 = p.x - p2.x;
+          const dy2 = p.y - p2.y;
+          const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
 
-          if (distance < 100) {
+          if (dist2 < connectionDist) {
             ctx.beginPath();
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(otherParticle.x, otherParticle.y);
-            ctx.strokeStyle = isDark ? "rgba(129, 140, 248, 0.1)" : "rgba(99, 102, 241, 0.1)";
-            ctx.globalAlpha = (100 - distance) / 100 * 0.3;
-            ctx.lineWidth = 1;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            // Opacity based on distance
+            const opacity = 1 - (dist2 / connectionDist);
+            ctx.strokeStyle = `rgba(${lineRGB}, ${opacity * 0.1})`;
+            ctx.lineWidth = 0.5;
             ctx.stroke();
           }
-        });
+        }
       });
 
-      ctx.globalAlpha = 1;
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -126,25 +123,14 @@ const BackgroundReactive = () => {
 
     return () => {
       window.removeEventListener("resize", resizeCanvas);
-      document.removeEventListener("mousemove", handleMouseMove);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
+      window.removeEventListener("mousemove", handlMouseMove);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, [isMobile, prefersReducedMotion, isDesktop, isDark]);
 
-  if (isMobile || prefersReducedMotion || !isDesktop) {
-    return null;
-  }
+  if (isMobile || prefersReducedMotion || !isDesktop) return null;
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="background-reactive"
-      aria-hidden="true"
-    />
-  );
+  return <canvas ref={canvasRef} className="background-reactive" />;
 };
 
 export default BackgroundReactive;
-

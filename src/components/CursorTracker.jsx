@@ -1,106 +1,81 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 import { useResponsive } from "../hooks/useResponsive";
-import { useTheme } from "../hooks/useTheme";
 
 /**
  * Premium cursor tracking effect
- * Theme-aware, GPU-accelerated, desktop only
+ * Theme-aware, SMOOTH physics, desktop only
  */
 const CursorTracker = () => {
-  const cursorRef = useRef(null);
   const { isMobile, prefersReducedMotion, isDesktop } = useResponsive();
-  const { isDark } = useTheme();
+  const [isHovering, setIsHovering] = useState(false);
+  const [isClicking, setIsClicking] = useState(false);
+
+  // Motion values for smooth physics
+  const cursorX = useMotionValue(-100);
+  const cursorY = useMotionValue(-100);
+
+  // Spring config for silky smooth follow
+  const springConfig = { damping: 25, stiffness: 120, mass: 0.5 };
+  const springX = useSpring(cursorX, springConfig);
+  const springY = useSpring(cursorY, springConfig);
 
   useEffect(() => {
-    // Disable on mobile, tablet, or reduced motion
-    if (isMobile || prefersReducedMotion || !isDesktop) {
-      if (cursorRef.current) {
-        cursorRef.current.style.display = "none";
-      }
-      return;
-    }
-
-    const cursor = cursorRef.current;
-    if (!cursor) return;
-
-    let mouseX = 0;
-    let mouseY = 0;
-    let currentX = 0;
-    let currentY = 0;
-    let rafId = null;
-
-    // Smooth follow animation using requestAnimationFrame
-    const updateCursor = () => {
-      // Easing for smooth lag effect
-      currentX += (mouseX - currentX) * 0.1;
-      currentY += (mouseY - currentY) * 0.1;
-
-      // Use transform for GPU acceleration
-      cursor.style.transform = `translate(${currentX}px, ${currentY}px) translate(-50%, -50%)`;
-      cursor.style.opacity = "1";
-
-      rafId = requestAnimationFrame(updateCursor);
-    };
+    // Disable on mobile/tablet or strictly standard inputs
+    if (isMobile || prefersReducedMotion || !isDesktop) return;
 
     const handleMouseMove = (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-
-      if (!rafId) {
-        rafId = requestAnimationFrame(updateCursor);
-      }
+      cursorX.set(e.clientX);
+      cursorY.set(e.clientY);
     };
 
-    const handleMouseLeave = () => {
-      cursor.style.opacity = "0";
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
-    };
+    const handleMouseDown = () => setIsClicking(true);
+    const handleMouseUp = () => setIsClicking(false);
 
-    // Magnetic effect on interactive elements
     const handleMouseEnter = (e) => {
-      if (e.target.closest("a, button, .project-card, .achievement-card")) {
-        cursor.classList.add("cursor-active");
+      if (e.target.closest("a, button, input, textarea, .interactive, .project-card, .achievement-card")) {
+        setIsHovering(true);
       }
     };
 
     const handleMouseOut = (e) => {
-      if (!e.relatedTarget || !e.relatedTarget.closest("a, button, .project-card, .achievement-card")) {
-        cursor.classList.remove("cursor-active");
+      if (!e.relatedTarget || !e.relatedTarget.closest("a, button, input, textarea, .interactive, .project-card, .achievement-card")) {
+        setIsHovering(false);
       }
     };
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseleave", handleMouseLeave);
-    document.addEventListener("mouseenter", handleMouseEnter, true);
-    document.addEventListener("mouseout", handleMouseOut, true);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    // Attach event listeners to document for delegation
+    document.addEventListener("mouseover", handleMouseEnter);
+    document.addEventListener("mouseout", handleMouseOut);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseleave", handleMouseLeave);
-      document.removeEventListener("mouseenter", handleMouseEnter, true);
-      document.removeEventListener("mouseout", handleMouseOut, true);
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-      }
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mouseover", handleMouseEnter);
+      document.removeEventListener("mouseout", handleMouseOut);
     };
-  }, [isMobile, prefersReducedMotion, isDesktop]);
+  }, [isMobile, prefersReducedMotion, isDesktop, cursorX, cursorY]);
 
-  // Don't render on mobile, tablet, or reduced motion
   if (isMobile || prefersReducedMotion || !isDesktop) {
     return null;
   }
 
   return (
-    <div
-      ref={cursorRef}
-      className={`cursor-tracker ${isDark ? "cursor-dark" : "cursor-light"}`}
-      aria-hidden="true"
-    />
+    <div className="cursor-wrapper">
+      <motion.div
+        className={`custom-cursor ${isHovering ? "hovering" : ""} ${isClicking ? "clicking" : ""}`}
+        style={{
+          x: springX,
+          y: springY,
+        }}
+      />
+    </div>
   );
 };
 
 export default CursorTracker;
-

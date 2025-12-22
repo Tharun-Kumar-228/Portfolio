@@ -9,6 +9,7 @@ import AchievementsSection from "./components/AchievementsSection";
 import ResumeSection from "./components/ResumeSection";
 import ContactSection from "./components/ContactSection";
 import CursorTracker from "./components/CursorTracker";
+import BackgroundReactive from "./components/BackgroundReactive";
 import { useTheme } from "./hooks/useTheme";
 import "./App.css";
 
@@ -24,6 +25,7 @@ function App() {
   return (
     <div className="App">
       <CursorTracker />
+      <BackgroundReactive />
       <Navigation />
       <HeroSection />
       <AboutSection />

@@ -1,9 +1,20 @@
-import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { gsap } from "gsap";
-import { FaArrowDown, FaGithub, FaLinkedin, FaEnvelope } from "react-icons/fa";
+import { FaArrowDown, FaGithub, FaLinkedin, FaEnvelope, FaReact, FaNodeJs, FaHtml5, FaCss3, FaJs, FaGitAlt } from "react-icons/fa";
 import { aboutData } from "../Contents/About";
 import { useResponsive } from "../hooks/useResponsive";
+import SplatterTransition from "./SplatterTransition";
+
+// Tech stack icons for floating effect
+const techIcons = [
+  { Icon: FaReact, color: "#61DAFB", delay: 0 },
+  { Icon: FaNodeJs, color: "#339933", delay: 1 },
+  { Icon: FaHtml5, color: "#E34F26", delay: 2 },
+  { Icon: FaCss3, color: "#1572B6", delay: 3 },
+  { Icon: FaJs, color: "#F7DF1E", delay: 4 },
+  { Icon: FaGitAlt, color: "#F05032", delay: 5 },
+];
 
 const HeroSection = () => {
   const heroRef = useRef(null);
@@ -11,163 +22,101 @@ const HeroSection = () => {
   const bgRef = useRef(null);
   const imageRef = useRef(null);
   const { prefersReducedMotion, isMobile, isDesktop } = useResponsive();
+  const [showSplatter, setShowSplatter] = useState(false);
+  const { scrollY } = useScroll();
 
+  // Parallax for floating icons
+  const y1 = useTransform(scrollY, [0, 500], [0, -100]);
+  const y2 = useTransform(scrollY, [0, 500], [0, -150]);
+
+  // useLayoutEffect for GSAP to avoid FOUC and ensure DOM is ready
   useEffect(() => {
-    if (!heroRef.current || prefersReducedMotion) {
-      // Ensure visibility even without animations
-      if (contentRef.current) {
-        gsap.set(contentRef.current.children, { opacity: 1, y: 0 });
-      }
-      if (imageRef.current) {
-        gsap.set(imageRef.current, { opacity: 1, scale: 1 });
-      }
-      return;
-    }
+    if (!heroRef.current || prefersReducedMotion) return;
 
-    const mm = gsap.matchMedia();
+    let ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
 
-    // Desktop: Full GSAP timeline with parallax
-    mm.add("(min-width: 1024px)", () => {
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-      if (bgRef.current) {
-        const handleScroll = () => {
-          if (bgRef.current && window.scrollY < window.innerHeight) {
-            gsap.set(bgRef.current, {
-              y: window.scrollY * 0.5
-            });
+      // Desktop: Full GSAP timeline
+      mm.add("(min-width: 1024px)", () => {
+        const tl = gsap.timeline({
+          defaults: { ease: "power3.out" },
+          onComplete: () => {
+            // Ensure opacity stays 1 after animation
+            if (contentRef.current) {
+              gsap.set(contentRef.current.children, { opacity: 1 });
+            }
           }
-        };
-        window.addEventListener("scroll", handleScroll, { passive: true });
+        });
 
         if (contentRef.current) {
-          // CRITICAL FIX: Ensure final opacity is 1 and position is 0
-          tl.from(contentRef.current.children, {
-            y: 80,
-            opacity: 0,
+          // Set initial state to avoid flash
+          gsap.set(contentRef.current.children, { y: 80, opacity: 0 });
+
+          tl.to(contentRef.current.children, {
+            y: 0, // Animate to default position
+            opacity: 1,
             stagger: 0.15,
-            duration: 1
-          });
-          
-          // Explicitly set final state to prevent any overwrites
-          tl.call(() => {
-            gsap.set(contentRef.current.children, { opacity: 1, y: 0, clearProps: "all" });
+            duration: 1,
+            clearProps: "all" // Clear props after animation to let CSS/Framer take over if needed, 
+            // BUT for opacity we might want to keep it if CSS default is 0. 
+            // Actually, let's NOT clearProps "opacity" if the CSS is relying on this.
+            // Safest is to animate to natural state.
           });
         }
 
-        // Animate image if present
+        // Animate image float
         if (imageRef.current) {
-          tl.from(imageRef.current, {
-            opacity: 0,
-            scale: 0.8,
+          gsap.set(imageRef.current, { opacity: 0, scale: 0.8 });
+
+          tl.to(imageRef.current, {
+            opacity: 1,
+            scale: 1,
             duration: 1,
             delay: 0.2
-          }, "-=0.8").call(() => {
-            gsap.set(imageRef.current, { opacity: 1, scale: 1 });
+          }, "-=0.8");
+
+          // Bobbing animation
+          gsap.to(imageRef.current, {
+            y: -20,
+            duration: 2,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+            delay: 1.2
           });
         }
+      });
 
-        // Auto shift upward after animations complete (cinematic reveal)
-        tl.to(heroRef.current, {
-          y: -50,
-          duration: 1.5,
-          delay: 0.5,
-          ease: "power2.inOut"
-        }, "+=0.3");
+      return () => mm.revert(); // Cleanup media query
+    }, heroRef); // Scope to heroRef
 
-        return () => {
-          window.removeEventListener("scroll", handleScroll);
-        };
-      } else if (contentRef.current) {
-        tl.from(contentRef.current.children, {
-          y: 80,
-          opacity: 0,
-          stagger: 0.15,
-          duration: 1
-        }).call(() => {
-          gsap.set(contentRef.current.children, { opacity: 1, y: 0, clearProps: "all" });
-        }).to(heroRef.current, {
-          y: -50,
-          duration: 1.5,
-          delay: 0.5,
-          ease: "power2.inOut"
-        }, "+=0.3");
-      }
-    });
-
-    // Tablet: Medium animations
-    mm.add("(min-width: 640px) and (max-width: 1023px)", () => {
-      const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
-      if (contentRef.current) {
-        tl.from(contentRef.current.children, {
-          y: 50,
-          opacity: 0,
-          stagger: 0.1,
-          duration: 0.8
-        }).call(() => {
-          gsap.set(contentRef.current.children, { opacity: 1, y: 0, clearProps: "all" });
-        });
-      }
-      if (imageRef.current) {
-        tl.from(imageRef.current, {
-          opacity: 0,
-          scale: 0.9,
-          duration: 0.8
-        }, "-=0.6").call(() => {
-          gsap.set(imageRef.current, { opacity: 1, scale: 1 });
-        });
-      }
-      // Subtle upward shift for tablet
-      tl.to(heroRef.current, {
-        y: -30,
-        duration: 1.2,
-        delay: 0.3,
-        ease: "power2.inOut"
-      }, "+=0.2");
-    });
-
-    // Mobile: Simple fade + slide
-    mm.add("(max-width: 639px)", () => {
-      const tl = gsap.timeline({ defaults: { ease: "power1.out" } });
-      if (contentRef.current) {
-        tl.from(contentRef.current.children, {
-          y: 30,
-          opacity: 0,
-          stagger: 0.08,
-          duration: 0.6
-        }).call(() => {
-          gsap.set(contentRef.current.children, { opacity: 1, y: 0, clearProps: "all" });
-        });
-      }
-      if (imageRef.current) {
-        tl.from(imageRef.current, {
-          opacity: 0,
-          scale: 0.95,
-          duration: 0.6
-        }, "-=0.4").call(() => {
-          gsap.set(imageRef.current, { opacity: 1, scale: 1 });
-        });
-      }
-    });
-
-    return () => {
-      mm.revert();
-      // Ensure visibility on cleanup
-      if (contentRef.current) {
-        gsap.set(contentRef.current.children, { opacity: 1, y: 0 });
-      }
-      if (imageRef.current) {
-        gsap.set(imageRef.current, { opacity: 1, scale: 1 });
-      }
-    };
+    return () => ctx.revert(); // Cleanup context
   }, [prefersReducedMotion, isMobile, isDesktop]);
 
-  if (!aboutData || aboutData.length === 0) {
-    return null;
-  }
+  const handleScrollToAbout = (e) => {
+    e.preventDefault();
+    setShowSplatter(true);
+  };
 
+  const onSplatterComplete = () => {
+    setShowSplatter(false);
+    const aboutSection = document.getElementById("about"); // Assuming About section has this ID
+    // If we have a specific transition logic, we can do it here. 
+    // Ideally, we scroll TO the section or reveal it.
+    // For this effect, we might want to simulate a scroll or simply let the splatter finish 
+    // and ensuring the about section is visible underneath.
+
+    // In this specific request: "Hero loads normally... Trigger cinematic reveal... About slides in under Hero"
+    // We'll scroll smoothly to the next section
+    const nextSection = document.querySelector("#about") || document.querySelector(".section:nth-of-type(2)");
+    if (nextSection) {
+      nextSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  if (!aboutData || aboutData.length === 0) return null;
   const about = aboutData[0];
-  const hasImage = about.image && about.image !== "/assets/profile.jpg";
+  const hasImage = about.image;
 
   const socialLinks = [
     { icon: FaGithub, href: "https://github.com/Tharun-Kumar-228", label: "GitHub" },
@@ -175,147 +124,100 @@ const HeroSection = () => {
     { icon: FaEnvelope, href: `mailto:${about.email}`, label: "Email" }
   ];
 
-  // Animation variants based on device - ensure final state is visible
-  const getAnimationVariants = () => {
-    if (prefersReducedMotion) {
-      return {
-        initial: { opacity: 1 },
-        animate: { opacity: 1 },
-        transition: { duration: 0 }
-      };
-    }
-
-    if (isMobile) {
-      return {
-        initial: { opacity: 0, y: 20 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.5 }
-      };
-    }
-
-    return {
-      initial: { opacity: 0, y: 50 },
-      animate: { opacity: 1, y: 0 },
-      transition: { duration: 0.8 }
-    };
-  };
-
-  const baseVariants = getAnimationVariants();
-
   return (
     <section id="home" className="hero-section" ref={heroRef}>
-      <div className="hero-bg" ref={bgRef}></div>
+      {showSplatter && <SplatterTransition onComplete={onSplatterComplete} />}
+
+      <div className="hero-bg" ref={bgRef} />
+
+      {/* Dynamic Circular Gradient Backdrop */}
+      <div className="hero-glow-backdrop" />
+
       <div className="hero-container">
         <div className="hero-wrapper">
-          <div className="hero-content" ref={contentRef} style={{ opacity: 1 }}>
+          <div className="hero-content" ref={contentRef}>
+            {/* GSAP controls entrance, so we disable Framer's initial/animate for entrance 
+                but keep it for hover/tap interactions if needed via variants or separate props */}
             <motion.h1
               className="hero-title"
-              {...baseVariants}
-              transition={{ ...baseVariants.transition, delay: 0.2 }}
-              style={{ opacity: 1 }}
+            // Removed conflicting framer entrance props
             >
               Hi, I'm <span className="highlight">{about.name}</span>
             </motion.h1>
-            <motion.p
-              className="hero-subtitle"
-              {...baseVariants}
-              transition={{ ...baseVariants.transition, delay: 0.3 }}
-              style={{ opacity: 1 }}
-            >
+            <motion.p className="hero-subtitle">
               {about.role}
             </motion.p>
-            <motion.p
-              className="hero-description"
-              {...baseVariants}
-              transition={{ ...baseVariants.transition, delay: 0.4 }}
-              style={{ opacity: 1 }}
-            >
+            <motion.p className="hero-description">
               {about.summary}
             </motion.p>
-            <motion.div
-              className="hero-social"
-              {...baseVariants}
-              transition={{ ...baseVariants.transition, delay: 0.5 }}
-              style={{ opacity: 1 }}
-            >
+
+            <div className="hero-social">
               {socialLinks.map((social, index) => (
-                <motion.a
-                  key={index}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="social-link"
-                  whileHover={!isMobile ? { scale: 1.2, y: -5 } : {}}
-                  whileTap={{ scale: 0.9 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }}
-                >
+                <a key={index} href={social.href} target="_blank" rel="noopener noreferrer" className="social-link">
                   <social.icon />
-                </motion.a>
+                </a>
               ))}
-            </motion.div>
-            <motion.div
-              className="hero-cta"
-              {...baseVariants}
-              transition={{ ...baseVariants.transition, delay: 0.6 }}
-              style={{ opacity: 1 }}
-            >
-              <motion.a
-                href="#contact"
-                className="cta-button primary"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" });
-                }}
-                whileHover={!isMobile ? { scale: 1.05, y: -2 } : {}}
-                whileTap={{ scale: 0.95 }}
-              >
+            </div>
+
+            <div className="hero-cta">
+              <a href="#contact" className="cta-button primary" onClick={handleScrollToAbout}>
                 Get In Touch
-              </motion.a>
-              <motion.a
-                href="#projects"
-                className="cta-button secondary"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.querySelector("#projects")?.scrollIntoView({ behavior: "smooth" });
-                }}
-                whileHover={!isMobile ? { scale: 1.05, y: -2 } : {}}
-                whileTap={{ scale: 0.95 }}
-              >
+              </a>
+              <a href="#projects" className="cta-button secondary">
                 View My Work
-              </motion.a>
-            </motion.div>
+              </a>
+            </div>
           </div>
-          {hasImage && (
-            <motion.div
-              className="hero-image-wrapper"
-              ref={imageRef}
-              style={{ opacity: 1 }}
-              whileHover={!isMobile && !prefersReducedMotion ? { scale: 1.05, y: -10 } : {}}
-            >
-              <img
-                src={about.image}
-                alt={about.name}
-                className="hero-image"
-                loading="eager"
-              />
-            </motion.div>
-          )}
+
+          <div className="hero-visuals">
+            {/* Floating Tech Icons */}
+            {!isMobile && techIcons.map((tech, i) => (
+              <motion.div
+                key={i}
+                className="floating-icon"
+                style={{
+                  color: tech.color,
+                  y: i % 2 === 0 ? y1 : y2,
+                  left: `${(i / techIcons.length) * 100}%`,
+                }}
+                animate={{
+                  y: [0, -20, 0],
+                  rotate: [0, 10, -10, 0]
+                }}
+                transition={{
+                  duration: 3 + i,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: tech.delay,
+                }}
+              >
+                <tech.Icon />
+              </motion.div>
+            ))}
+
+            {/* Main Image */}
+            {hasImage && (
+              <div className="hero-image-container" ref={imageRef}>
+                <div className="image-glow" />
+                <img
+                  src={about.image}
+                  alt={about.name}
+                  className="hero-image"
+                  loading="eager"
+                />
+              </div>
+            )}
+          </div>
         </div>
+
         {!isMobile && (
           <motion.div
             className="scroll-indicator"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1.5 }}
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            onClick={handleScrollToAbout}
           >
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              <FaArrowDown />
-            </motion.div>
+            <FaArrowDown />
           </motion.div>
         )}
       </div>

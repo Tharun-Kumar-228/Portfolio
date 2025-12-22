@@ -7,7 +7,7 @@
   --primary-light: #818cf8;
   --secondary-color: #ec4899;
   --accent-color: #06b6d4;
-  
+
   /* Light Theme (Default) */
   --bg: #ffffff;
   --text: #1f2937;
@@ -20,25 +20,25 @@
   --bg-dark: #111827;
   --bg-card: #ffffff;
   --border-color: #e5e7eb;
-  
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  
+
   --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   --gradient-soft: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  
+
   /* Responsive spacing */
   --spacing-xs: clamp(0.5rem, 1vw, 0.75rem);
   --spacing-sm: clamp(0.75rem, 1.5vw, 1rem);
   --spacing-md: clamp(1rem, 2vw, 1.5rem);
   --spacing-lg: clamp(1.5rem, 3vw, 2.5rem);
   --spacing-xl: clamp(2rem, 4vw, 4rem);
-  
+
   /* Theme transition */
   --theme-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
@@ -55,13 +55,13 @@
   --bg-secondary: #1e293b;
   --bg-card: #1e293b;
   --border-color: #334155;
-  
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
-  
+
   --gradient-soft: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
 }
 
@@ -78,6 +78,7 @@ html {
 
 /* Prefers reduced motion */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -99,6 +100,65 @@ body {
   overflow-x: hidden;
   width: 100%;
   transition: var(--theme-transition);
+  cursor: none;
+  /* Hide default cursor for custom one */
+}
+
+/* Restore cursor on mobile/touch devices */
+@media (max-width: 1024px),
+(pointer: coarse) {
+  body {
+    cursor: auto;
+  }
+}
+
+/* Custom Cursor Styles */
+.cursor-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+}
+
+.custom-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  /* Difference mode makes this reactive */
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 9999;
+  transition: width 0.3s ease, height 0.3s ease, background-color 0.3s ease;
+}
+
+.custom-cursor.hovering {
+  width: 60px;
+  height: 60px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid white;
+}
+
+.custom-cursor.clicking {
+  transform: translate(-50%, -50%) scale(0.8);
+}
+
+/* Background Motion */
+.background-reactive {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* ============================================
@@ -242,7 +302,8 @@ body {
    ============================================ */
 .hero-section {
   min-height: 100vh;
-  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  min-height: 100dvh;
+  /* Dynamic viewport height for mobile */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -380,7 +441,8 @@ body {
   transition: all 0.3s ease;
   border: 2px solid transparent;
   touch-action: manipulation;
-  min-height: 44px; /* Touch target size */
+  min-height: 44px;
+  /* Touch target size */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -872,7 +934,7 @@ body {
   opacity: 1;
 }
 
-.achievement-card > * {
+.achievement-card>* {
   position: relative;
   z-index: 1;
 }
@@ -1136,7 +1198,8 @@ body {
   transition: all 0.3s ease;
   background: var(--bg-card);
   color: var(--text-primary);
-  min-height: 44px; /* Touch target */
+  min-height: 44px;
+  /* Touch target */
 }
 
 .form-group textarea {
@@ -1481,7 +1544,8 @@ body {
 }
 
 /* Prevent horizontal scroll */
-html, body {
+html,
+body {
   max-width: 100%;
   overflow-x: hidden;
 }
@@ -1525,6 +1589,7 @@ html, body {
 
 /* Hide default cursor on interactive elements when cursor tracker is active */
 @media (min-width: 1024px) {
+
   body:has(.cursor-tracker) a,
   body:has(.cursor-tracker) button,
   body:has(.cursor-tracker) .project-card,
@@ -1535,6 +1600,7 @@ html, body {
 
 /* Touch optimization */
 @media (hover: none) and (pointer: coarse) {
+
   .project-card:hover,
   .skill-category-card:hover,
   .certification-card:hover,
@@ -1545,4 +1611,251 @@ html, body {
   .cursor-tracker {
     display: none;
   }
+}
+
+/* ============================================
+   ACHIEVEMENTS CAROUSEL (New)
+   ============================================ */
+.achievements-section {
+  position: relative;
+  /* Remove fixed padding if pinning */
+  padding: 0;
+  height: auto;
+  min-height: 100vh;
+}
+
+.achievements-carousel-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Base card styling override */
+.achievement-card {
+  background: var(--bg-card);
+  padding: clamp(2rem, 5vw, 3rem);
+  border-radius: 20px;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-color);
+  max-width: 600px;
+  width: 90vw;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.achievement-icon {
+  font-size: 3rem;
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+}
+
+.achievement-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.achievement-position {
+  font-size: 1.1rem;
+  color: var(--primary-light);
+  font-weight: 600;
+}
+
+.achievement-image-wrapper {
+  width: 100%;
+  height: 200px;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+.achievement-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.achievement-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.achievement-image-wrapper:hover .achievement-image-overlay {
+  opacity: 1;
+}
+
+.achievement-image-wrapper:hover .achievement-image {
+  transform: scale(1.05);
+}
+
+.view-full-text {
+  color: white;
+  font-weight: 600;
+  border: 1px solid white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+}
+
+/* Desktop Horizontal Scroll Logic */
+@media (min-width: 1024px) {
+  .achievements-section {
+    overflow: hidden;
+    /* Hide horizontal overflow */
+    padding: 0;
+  }
+
+  .achievements-carousel-container {
+    display: flex;
+    flex-direction: row;
+    /* Horizontal layout */
+    justify-content: flex-start;
+    align-items: center;
+    width: fit-content;
+    /* Allow container to grow wide */
+    height: 100vh;
+    padding: 0 5vw;
+    /* Start padding */
+    gap: 4rem;
+    /* Spacing between cards */
+    max-width: none;
+    /* remove constraint */
+    position: relative;
+    left: 0;
+  }
+
+  .achievement-card-wrapper {
+    position: relative;
+    /* Normal flow */
+    transform: none;
+    opacity: 1;
+    width: 600px;
+    /* Fixed width for desktop cards */
+    flex-shrink: 0;
+    top: auto;
+    left: auto;
+  }
+}
+
+/* Mobile Fallback */
+@media (max-width: 1023px) {
+  .achievements-carousel-container {
+    height: auto;
+    display: block;
+    padding: 4rem 1rem;
+  }
+
+  .achievement-card-wrapper {
+    position: relative;
+    opacity: 1;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .achievement-card {
+    width: 100%;
+  }
+}
+
+
+/* ============================================
+   HERO UPGRADES (New)
+   ============================================ */
+.hero-glow-backdrop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50vw;
+  height: 50vw;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(99, 102, 241, 0) 70%);
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none;
+  animation: pulse-glow 8s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+.hero-visuals {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 400px;
+}
+
+.hero-image-container {
+  position: relative;
+  z-index: 2;
+  border-radius: 50%;
+  /* Circular portrait style if needed, or keep square */
+}
+
+.hero-image {
+  /* Ensuring it overrides generic styles */
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+  position: relative;
+}
+
+.image-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 110%;
+  height: 110%;
+  background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  opacity: 0.6;
+}
+
+.floating-icon {
+  position: absolute;
+  font-size: 2.5rem;
+  background: var(--bg-card);
+  padding: 1rem;
+  border-radius: 50%;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  backdrop-filter: blur(5px);
+  border: 1px solid var(--border-color);
 }

@@ -44,3 +44,4 @@ const Marquee = ({ items, speed = 50 }) => {
 
 export default Marquee;
 
+
