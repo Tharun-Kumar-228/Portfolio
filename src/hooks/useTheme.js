@@ -12,11 +12,8 @@ export const useTheme = () => {
     if (savedTheme) {
       return savedTheme;
     }
-    // Check OS preference
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      return "dark";
-    }
-    return "light";
+    // Default to Dark Mode
+    return "dark";
   });
 
   useEffect(() => {
