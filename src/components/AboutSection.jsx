@@ -6,11 +6,11 @@ import resumePdf from "../assets/Tharunkumar_Resume.pdf";
 import AboutSectionMobile from "./AboutSectionMobile";
 
 const AboutSection = () => {
-  if (!aboutData || aboutData.length === 0) return null;
-  const data = aboutData[0];
+  // if (!aboutData || aboutData.length === 0) return null; // Removed potential blocker
+  const data = aboutData && aboutData.length > 0 ? aboutData[0] : { name: "Tharunkumar", role: "Developer", summary: "Loading...", location: "Earth", email: "contact@example.com", image: "", heroImage: "" };
 
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
 
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
