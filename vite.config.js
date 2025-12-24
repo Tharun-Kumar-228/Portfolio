@@ -10,5 +10,9 @@ export default defineConfig({
   },
   resolve: {
     dedupe: ['gsap']
+  },
+  server: {
+    port:3000,
+    host: true
   }
 })

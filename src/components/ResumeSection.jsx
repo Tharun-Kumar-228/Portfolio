@@ -1,12 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaFilePdf, FaFingerprint, FaLock, FaDownload, FaEye, FaShieldAlt, FaTimes } from "react-icons/fa";
 import resumePdf from "../assets/Tharunkumar_Resume.pdf";
+import ResumeSectionMobile from "./ResumeSectionMobile";
 
 const ResumeSection = () => {
 
   const [isHovered, setIsHovered] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  if (mounted && isMobile) {
+    return <ResumeSectionMobile />;
+  }
 
   return (
     <section id="resume" className="section resume-section">
@@ -357,6 +372,7 @@ const ResumeSection = () => {
         @keyframes spinRight { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         @media(max-width: 768px) {
+            .secure-uplink-container { padding: 1.5rem; }
             .uplink-content-row { flex-direction: column; text-align: center; gap: 1.5rem; }
             .auth-module { margin-left: 0; }
             .uplink-actions { flex-direction: column; }

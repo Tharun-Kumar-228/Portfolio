@@ -1,12 +1,17 @@
 import { motion } from "framer-motion";
 import { contactData } from "../Contents/Contact";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import emailjs from "emailjs-com";
 import { FaEnvelope, FaUser, FaComment, FaPaperPlane, FaCheckCircle, FaExclamationCircle, FaSatelliteDish, FaMapMarkerAlt, FaGlobe } from "react-icons/fa";
 import { useResponsive } from "../hooks/useResponsive";
+import ContactSectionMobile from "./ContactSectionMobile";
 
 const ContactSection = () => {
-  const { isMobile, prefersReducedMotion } = useResponsive();
+  const { prefersReducedMotion } = useResponsive();
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Form State Hooks (Must be called unconditionally)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -16,11 +21,13 @@ const ContactSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeField, setActiveField] = useState(null);
 
-  if (!contactData || contactData.length === 0) {
-    return null;
-  }
-
-  const contact = contactData[0];
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -33,7 +40,6 @@ const ContactSection = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setStatus({ type: "", message: "" });
-
     const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || "YOUR_SERVICE_ID";
     const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || "YOUR_TEMPLATE_ID";
     const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "YOUR_PUBLIC_KEY";
@@ -46,7 +52,7 @@ const ContactSection = () => {
           from_name: formData.name,
           from_email: formData.email,
           message: formData.message,
-          to_email: contact.email
+          to_email: contactData?.[0]?.email
         },
         publicKey
       );
@@ -65,6 +71,17 @@ const ContactSection = () => {
       setIsSubmitting(false);
     }
   };
+
+
+  if (mounted && isMobile) {
+    return <ContactSectionMobile />;
+  }
+
+  if (!contactData || contactData.length === 0) {
+    return null;
+  }
+
+  const contact = contactData[0];
 
   return (
     <section id="contact" className="section contact-section">

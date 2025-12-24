@@ -1,8 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { FaUserSecret, FaFileDownload, FaEye, FaMicrochip, FaGlobeAmericas, FaEnvelopeOpenText } from "react-icons/fa";
 import { aboutData } from "../Contents/About";
 import resumePdf from "../assets/Tharunkumar_Resume.pdf";
+import AboutSectionMobile from "./AboutSectionMobile";
 
 const AboutSection = () => {
   if (!aboutData || aboutData.length === 0) return null;
@@ -11,7 +12,20 @@ const AboutSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+    checkMobile(); // Check on mount
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  if (mounted && isMobile) {
+    return <AboutSectionMobile data={data} />;
+  }
 
   return (
     <section id="about" className="section about-section" ref={ref}>
@@ -330,9 +344,20 @@ const AboutSection = () => {
         @media(max-width: 900px) {
             .about-grid { grid-template-columns: 1fr; text-align: center; }
             .profile-scanner { margin-bottom: 2rem; }
-            .system-specs { justify-content: center; }
-            .meta-data-row { justify-content: center; }
-            .bio-terminal { border-left: none; border-top: 3px solid var(--primary-color); }
+            .system-specs, .meta-data-row, .action-modules { 
+                justify-content: center; 
+                flex-wrap: wrap; 
+            }
+            .bio-terminal { border-left: none; border-top: 3px solid var(--primary-color); padding: 1.5rem; }
+            
+            /* Scale down Hexagon for mobile */
+            .hex-frame { width: 260px; height: 260px; }
+            .hex-content { width: 220px; height: 220px; }
+            .spin-slow { width: 250px; height: 250px; }
+            .spin-fast { width: 270px; height: 270px; }
+            
+            .meta-data-row { gap: 1rem; flex-direction: column; }
+            .module-btn { width: 100%; flex: auto; }
         }
       `}</style>
     </section>

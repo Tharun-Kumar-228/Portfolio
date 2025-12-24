@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { skillsData } from "../Contents/Skills";
 import {
@@ -8,6 +8,7 @@ import {
     SiMongodb, SiTailwindcss, SiFramer, SiFirebase, SiMysql, SiCplusplus, SiBlender, SiCanva, SiExpress
 } from "react-icons/si";
 import { TbBrandCpp } from "react-icons/tb";
+import SkillsSectionMobile from "./SkillsSectionMobile";
 
 // Helper to map string names to Icons
 const getSkillIcon = (skillName) => {
@@ -34,6 +35,21 @@ const getSkillIcon = (skillName) => {
 };
 
 const SkillsSection = () => {
+    const [isMobile, setIsMobile] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        const checkMobile = () => setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
+
+    if (mounted && isMobile) {
+        return <SkillsSectionMobile />;
+    }
+
     return (
         <section id="skills" className="section skills-section">
             <div className="container">

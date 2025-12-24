@@ -2,12 +2,23 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { projectsData } from "../Contents/Projects";
 import { FaGithub, FaExternalLinkAlt, FaTimes, FaDatabase, FaServer, FaMicrochip, FaGlobe, FaSearch } from "react-icons/fa";
+import ProjectsSectionMobile from "./ProjectsSectionMobile";
 
 const ProjectsSection = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedProject, setSelectedProject] = useState(null);
   const [filteredProjects, setFilteredProjects] = useState(projectsData);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const categories = ["All", "Full Stack", "Web App", "IoT System"];
 
@@ -35,6 +46,10 @@ const ProjectsSection = () => {
     if (selectedProject) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "auto";
   }, [selectedProject]);
+
+  if (mounted && isMobile) {
+    return <ProjectsSectionMobile />;
+  }
 
   return (
     <section id="projects" className="section projects-section">
@@ -262,8 +277,8 @@ const ProjectsSection = () => {
         /* GRID */
         .projects-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+            gap: 1.5rem;
         }
 
         /* PROJECT SLATE CARD */

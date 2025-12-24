@@ -3,16 +3,31 @@ import { motion, AnimatePresence } from "framer-motion";
 import { codingProfiles } from "../Contents/CodingProfiles";
 import { useProfileStats } from "../hooks/useProfileStats";
 import { FaExternalLinkAlt, FaTimes, FaTrophy, FaChartLine } from "react-icons/fa";
+import CodingProfilesSectionMobile from "./CodingProfilesSectionMobile";
 
 const CodingProfilesSection = () => {
     const { stats, loading } = useProfileStats(codingProfiles);
     const [selectedProfile, setSelectedProfile] = useState(null);
+    const [isMobile, setIsMobile] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        const checkMobile = () => setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Lock scroll when modal is open
     useEffect(() => {
         if (selectedProfile) document.body.style.overflow = "hidden";
         else document.body.style.overflow = "auto";
     }, [selectedProfile]);
+
+    if (mounted && isMobile) {
+        return <CodingProfilesSectionMobile />;
+    }
 
     return (
         <section id="profiles" className="section profiles-section">
@@ -161,8 +176,8 @@ const CodingProfilesSection = () => {
 
                 .profiles-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-                    gap: 2rem;
+                    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+                    gap: 1.5rem;
                     justify-content: center;
                 }
 

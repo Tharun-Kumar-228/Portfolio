@@ -1,12 +1,15 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { achievementsData } from "../Contents/Achievements";
 import { FaTrophy, FaChevronRight, FaChevronLeft, FaTimes, FaCalendarAlt, FaMapMarkerAlt, FaMedal, FaRandom } from "react-icons/fa";
+import AchievementsSectionMobile from "./AchievementsSectionMobile";
 
 const AchievementsSection = () => {
     const [selectedId, setSelectedId] = useState(null);
     const [currDeg, setCurrDeg] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     // Refs for Drag Logic
     const startX = useRef(0);
@@ -16,6 +19,18 @@ const AchievementsSection = () => {
     const count = achievementsData.length;
     const theta = 360 / count;
     const radius = Math.round((300 / 2) / Math.tan(Math.PI / count)) + 100;
+
+    useEffect(() => {
+        setMounted(true);
+        const checkMobile = () => setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    if (mounted && isMobile) {
+        return <AchievementsSectionMobile />;
+    }
 
     const rotate = (direction) => {
         if (direction === "next") {
@@ -28,23 +43,20 @@ const AchievementsSection = () => {
     // SPIN TO RANDOM
     const spinRandom = () => {
         const randomIndex = Math.floor(Math.random() * count);
-        // Spin at least 2 full rotations (720) + target
-        // We want the final rotation to align such that (currDeg % 360) places the item in front.
-        // Actually simpler: just subtract a large amount.
         const spinAmount = 720 + (randomIndex * theta);
-        // Ensure we move in one direction for effect
         setCurrDeg(prev => prev - spinAmount);
     };
 
     // DRAG HANDLERS
     const handleMouseDown = (e) => {
+        if (isMobile) return;
         setIsDragging(true);
         startX.current = e.pageX || e.touches[0].pageX;
         startDeg.current = currDeg;
     };
 
     const handleMouseMove = (e) => {
-        if (!isDragging) return;
+        if (!isDragging || isMobile) return;
         const x = e.pageX || e.touches[0].pageX;
         const delta = (x - startX.current) * 0.5; // Sensitivity
         setCurrDeg(startDeg.current + delta);
@@ -56,25 +68,23 @@ const AchievementsSection = () => {
 
     // WHEEL / TRACKPAD SCROLL
     const handleWheel = (e) => {
-        // If horizontal scroll detected (Trackpad swiping left/right or Shift+Scroll)
+        if (isMobile) return;
         if (Math.abs(e.deltaX) > 5) {
-            e.preventDefault(); // Prevent browser back/forward navigation if possible
+            e.preventDefault();
             setCurrDeg(prev => prev + e.deltaX * 0.5);
         }
     };
 
     const handleCardClick = (id, index) => {
-        if (isDragging) return; // Prevent click after drag
+        if (isDragging) return;
+
+        if (isMobile) {
+            setSelectedId(id);
+            return;
+        }
 
         let normalized = Math.round(-currDeg / theta) % count;
         if (normalized < 0) normalized += count;
-
-        // Tolerance for float math
-        // logic: check if the face at 'index' is roughly at angle 0 relative to camera
-        // (index * theta + currDeg) % 360  should be close to 0
-
-        // Keep simple: if it looks front, open it.
-        // Or strictly check if it's the active one.
 
         if (normalized === index) {
             setSelectedId(id);
@@ -105,7 +115,7 @@ const AchievementsSection = () => {
 
                 {/* 3D SCENE CONTAINER */}
                 <div
-                    className="scene"
+                    className={`scene ${isMobile ? "mobile-view" : ""}`}
                     onMouseDown={handleMouseDown}
                     onTouchStart={handleMouseDown}
                     onMouseMove={handleMouseMove}
@@ -113,10 +123,10 @@ const AchievementsSection = () => {
                 >
                     <div
                         className="carousel"
-                        style={{
+                        style={!isMobile ? {
                             transform: `translateZ(-${radius}px) rotateY(${currDeg}deg)`,
                             transition: isDragging ? 'none' : 'transform 1s cubic-bezier(0.2, 0.8, 0.2, 1)'
-                        }}
+                        } : {}}
                     >
                         {achievementsData.map((item, index) => {
                             const angle = theta * index;
@@ -124,9 +134,9 @@ const AchievementsSection = () => {
                                 <div
                                     key={item.id}
                                     className="carousel-cell"
-                                    style={{
+                                    style={!isMobile ? {
                                         transform: `rotateY(${angle}deg) translateZ(${radius}px)`
-                                    }}
+                                    } : {}}
                                     onClick={() => handleCardClick(item.id, index)}
                                 >
                                     <div className="achievement-glass-card">
@@ -143,17 +153,21 @@ const AchievementsSection = () => {
                     </div>
                 </div>
 
-                {/* CONTROLS */}
-                <div className="wheel-controls">
-                    <button className="wheel-btn" onClick={() => rotate("next")}><FaChevronLeft /></button>
+                {/* CONTROLS (Hide on mobile) */}
+                {!isMobile && (
+                    <>
+                        <div className="wheel-controls">
+                            <button className="wheel-btn" onClick={() => rotate("next")}><FaChevronLeft /></button>
+                            <button className="wheel-btn random-btn" onClick={spinRandom}><FaRandom /></button>
+                            <button className="wheel-btn" onClick={() => rotate("prev")}><FaChevronRight /></button>
+                        </div>
+                        <p className="drag-hint">Drag/Swipe to Spin • Click to View</p>
+                    </>
+                )}
 
-                    <button className="wheel-btn random-btn" onClick={spinRandom}>
-                        <FaRandom />
-                    </button>
-
-                    <button className="wheel-btn" onClick={() => rotate("prev")}><FaChevronRight /></button>
-                </div>
-                <p className="drag-hint">Drag/Swipe to Spin • Click to View</p>
+                {isMobile && (
+                    <p className="drag-hint">Swipe left/right to browse • Tap to View</p>
+                )}
 
             </div>
 
@@ -246,6 +260,50 @@ const AchievementsSection = () => {
                     cursor: pointer;
                 }
 
+                /* MOBILE OVERRIDES */
+                .scene.mobile-view {
+                    width: 100%;
+                    height: auto;
+                    min-height: 400px;
+                    perspective: none;
+                    margin: 0;
+                    overflow-x: auto;
+                    padding-bottom: 2rem;
+                    /* Hide scrollbar but keep functionality */
+                    -ms-overflow-style: none;  /* IE and Edge */
+                    scrollbar-width: none;  /* Firefox */
+                }
+                .scene.mobile-view::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .scene.mobile-view .carousel {
+                    position: relative;
+                    width: max-content;
+                    height: auto;
+                    transform-style: flat;
+                    display: flex;
+                    gap: 1.5rem;
+                    padding: 1rem 2rem;
+                }
+
+                .scene.mobile-view .carousel-cell {
+                    position: relative;
+                    left: auto; top: auto;
+                    transform: none !important; /* Force no 3D transform */
+                    flex-shrink: 0;
+                    margin: 0;
+                    /* Scroll Snap */
+                    scroll-snap-align: center;
+                }
+                
+                /* Make section touchable on mobile */
+                @media(max-width: 768px) {
+                    .achievements-section {
+                        touch-action: pan-x pan-y; /* Restore safe scroll */
+                    }
+                }
+
                 .achievement-glass-card {
                     width: 100%;
                     height: 100%;
@@ -261,8 +319,13 @@ const AchievementsSection = () => {
                     box-shadow: 0 0 20px rgba(0, 255, 102, 0.1), inset 0 0 20px rgba(0, 255, 102, 0.05);
                     backdrop-filter: blur(5px);
                     transition: 0.3s;
-                    pointer-events: none; /* Let clicks pass to cell for simplicity? No, we handle click on cell */
+                    pointer-events: none; 
                 }
+                /* Re-enable pointer events for mobile click to work simpler */
+                .scene.mobile-view .achievement-glass-card {
+                    pointer-events: auto;
+                }
+
                 
                 .carousel-cell:hover .achievement-glass-card {
                     box-shadow: 0 0 40px rgba(0, 255, 102, 0.3);
@@ -457,13 +520,14 @@ const AchievementsSection = () => {
 
                 @media(max-width: 768px) {
                     .scene {
-                        width: 260px;
-                        height: 360px;
+                        width: 100%;
+                        height: auto;
                     }
-                    .carousel-cell {
-                        width: 240px;
-                        height: 340px;
-                        left: 10px; top: 10px;
+                    /* Ensure modal is responsive too */
+                    .modal-content-holo {
+                        max-width: 90%;
+                        max-height: 80vh;
+                        overflow-y: auto;
                     }
                 }
             `}</style>

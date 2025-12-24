@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import HeroSectionMobile from "./HeroSectionMobile";
 import { motion, useScroll, useTransform, useSpring, useMotionValue, useAnimationFrame } from "framer-motion";
 import { gsap } from "gsap";
 import { FaGithub, FaLinkedin, FaEnvelope, FaReact, FaNodeJs, FaHtml5, FaCss3, FaJs, FaGitAlt, FaJava, FaPython, FaAws, FaMousePointer } from "react-icons/fa";
@@ -167,11 +168,23 @@ const HeroSection = () => {
   if (!aboutData || aboutData.length === 0) return null;
   const about = aboutData[0];
 
+  // IF MOBILE: Return the Advanced Mobile HUD Component
+  if (isMobile) {
+    return (
+      <>
+        {showTransition && <TileTransition onComplete={onTransitionComplete} />}
+        <HeroSectionMobile about={about} />
+      </>
+    );
+  }
+
   const socialLinks = [
     { icon: FaGithub, href: "https://github.com/Tharun-Kumar-228" },
     { icon: FaLinkedin, href: "#" },
     { icon: FaEnvelope, href: `mailto:${about.email}` }
   ];
+
+  const orbitRadius = isMobile ? 120 : 280; // Significantly reduced for safe mobile fit
 
   return (
     <section
@@ -268,21 +281,21 @@ const HeroSection = () => {
                   {(
                     <>
                       {/* Ring 1 - Vertical (0 Deg) */}
-                      <EnergyRing radius={280} rotationY={0} />
+                      <EnergyRing radius={orbitRadius} rotationY={0} />
                       {r1.map((tech, i) => (
-                        <OrbitalIcon key={`r1-${i}`} Icon={tech.Icon} color={tech.color} offset={tech.offset} radius={280} duration={14} rotationY={0} />
+                        <OrbitalIcon key={`r1-${i}`} Icon={tech.Icon} color={tech.color} offset={tech.offset} radius={orbitRadius} duration={14} rotationY={0} />
                       ))}
 
                       {/* Ring 2 - Diagonal Right (60 Deg) */}
-                      <EnergyRing radius={280} rotationY={60} />
+                      <EnergyRing radius={orbitRadius} rotationY={60} />
                       {r2.map((tech, i) => (
-                        <OrbitalIcon key={`r2-${i}`} Icon={tech.Icon} color={tech.color} offset={tech.offset} radius={280} duration={16} rotationY={60} />
+                        <OrbitalIcon key={`r2-${i}`} Icon={tech.Icon} color={tech.color} offset={tech.offset} radius={orbitRadius} duration={16} rotationY={60} />
                       ))}
 
                       {/* Ring 3 - Diagonal Left (-60 aka 120 Deg) */}
-                      <EnergyRing radius={280} rotationY={-60} />
+                      <EnergyRing radius={orbitRadius} rotationY={-60} />
                       {r3.map((tech, i) => (
-                        <OrbitalIcon key={`r3-${i}`} Icon={tech.Icon} color={tech.color} offset={tech.offset} radius={280} duration={18} rotationY={-60} />
+                        <OrbitalIcon key={`r3-${i}`} Icon={tech.Icon} color={tech.color} offset={tech.offset} radius={orbitRadius} duration={18} rotationY={-60} />
                       ))}
                     </>
                   )}
@@ -293,8 +306,8 @@ const HeroSection = () => {
                     style={{
                       position: "relative",
                       zIndex: 10,
-                      width: "360px", // Increased width
-                      height: "450px", // Increased height for full PNG
+                      width: isMobile ? "220px" : "360px", // Responsive Width
+                      height: isMobile ? "280px" : "450px", // Responsive Height
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",

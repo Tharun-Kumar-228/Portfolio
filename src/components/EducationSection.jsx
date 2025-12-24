@@ -1,9 +1,25 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { educationData } from "../Contents/Education";
 import { FaGraduationCap, FaSchool, FaAward } from "react-icons/fa";
+import EducationSectionMobile from "./EducationSectionMobile";
 
 const EducationSection = () => {
+    const [isMobile, setIsMobile] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        const checkMobile = () => setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
+
+    if (mounted && isMobile) {
+        return <EducationSectionMobile />;
+    }
+
     return (
         <section id="education" className="section education-section">
             <div className="container">
@@ -247,6 +263,7 @@ const styles = `
 @media (max-width: 768px) {
     .timeline-line {
         left: 20px;
+        transform: translateX(0);
     }
     
     .timeline-item {
